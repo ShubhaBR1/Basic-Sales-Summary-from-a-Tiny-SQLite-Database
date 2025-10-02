@@ -1,0 +1,45 @@
+import sqlite3
+import pandas as pd
+import matplotlib.pyplot as plt
+
+conn = sqlite3.connect("sales_data.db")
+cursor = conn.cursor()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS sales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product TEXT,
+    quantity INTEGER,
+    price REAL
+)
+""")
+
+sample_data = [
+    ("Laptop", 5, 60000),
+    ("Laptop", 3, 62000),
+    ("Phone", 10, 20000),  # Removed the -- that was causing the error
+    ("Phone", 8, 22000),
+    ("Tablet", 6, 15000),
+    ("Tablet", 4, 18000)
+]
+
+cursor.executemany("INSERT INTO sales (product, quantity, price) VALUES (?, ?, ?)", sample_data)
+
+conn.commit()
+query = """
+SELECT 
+    product, 
+    SUM(quantity) AS total_qty, 
+    SUM(quantity * price) AS revenue
+FROM sales
+GROUP BY product
+"""
+
+df = pd.read_sql_query(query, conn)
+print(df)
+df.plot(kind='bar', x='product', y='revenue', legend=False, color="skyblue")
+plt.title("Revenue by Product"
+)
+plt.ylabel("Revenue")
+plt.xlabel("Product")
+plt.tight_layout()
+plt.show()
